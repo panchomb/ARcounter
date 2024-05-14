@@ -8,6 +8,7 @@ using Niantic.Lightship.AR.ObjectDetection;
 using Niantic.Lightship.AR.Subsystems.ObjectDetection;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ObjectDetectionSample: MonoBehaviour
 {
@@ -50,6 +51,16 @@ public class ObjectDetectionSample: MonoBehaviour
 
     private bool _filterOn = false;
 
+    // New Attributes for counter
+
+    [SerializeField]
+    private Image _countRectangle;
+
+    [SerializeField]
+    private TextMeshProUGUI _countText;
+
+    private Queue<int> _lastTenCounts = new Queue<int>(10);
+
     // The name of the actively selected semantic category
     private string _categoryName = string.Empty;
     private void Awake()
@@ -83,57 +94,44 @@ public class ObjectDetectionSample: MonoBehaviour
 
     private void ObjectDetectionsUpdated(ARObjectDetectionsUpdatedEventArgs args)
     {
-        string resultString = "";
-        float _confidence = 0;
-        string _name = "";
-        var result = args.Results; 
+        var result = args.Results;
+        float confidence;
         if (result == null)
         {
+            _countText.text = "Count: 0";
             return;
         }
-            
-        _drawRect.ClearRects();
+
+        int vehicleCount = 0;
+
         for (int i = 0; i < result.Count; i++)
         {
-            if(!_filterOn)
+            confidence = result[i].GetConfidence("vehicle");
+            if (confidence > _probabilityThreshold)
             {
-                var detection = result[i];
-                var categorizations = detection.GetConfidentCategorizations(_probabilityThreshold);
-                if (categorizations.Count <= 0)
-                {
-                    break;
-                }
-                
-                categorizations.Sort((a, b) => b.Confidence.CompareTo(a.Confidence));
-                var categoryToDisplay = categorizations[0];
-                _confidence = categoryToDisplay.Confidence;
-                _name = categoryToDisplay.CategoryName;
+                vehicleCount++;
             }
-            else
-            {
-                //Get name and confidence of the detected object in a given category.
-                _confidence = result[i].GetConfidence(_categoryName);   
-
-                //filter out the objects with confidence less than the threshold 
-                if (_confidence< _probabilityThreshold)
-                {
-                    break;
-                }
-                _name = _categoryName;
-            }
-            
-            
-            int h = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.height);
-            int w = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.width);
-
-            //Get the rect around the detected object
-            var _rect = result[i].CalculateRect(w,h,Screen.orientation);
-
-            resultString = $"{_name}: {_confidence}\n";
-            //Draw the Rect.
-            _drawRect.CreateRect(_rect, _colors[i % _colors.Length], resultString);
-
         }
+
+        if (_lastTenCounts.Count >= 10)
+        {
+            _lastTenCounts.Dequeue();
+        }
+        _lastTenCounts.Enqueue(vehicleCount);
+
+        int modeCount;
+        var groupedCounts = _lastTenCounts.GroupBy(x => x).OrderByDescending(g => g.Count()).ToList();
+        if (groupedCounts.Count > 0 && groupedCounts[0].Count() > 1)
+        {
+            modeCount = groupedCounts[0].Key;
+        }
+        else
+        {
+            modeCount = vehicleCount;
+        }
+
+
+        _countText.text = $"Count: {modeCount}";
     }
     private void OnThresholdChanged(float newThreshold){
         _probabilityThreshold = newThreshold;
