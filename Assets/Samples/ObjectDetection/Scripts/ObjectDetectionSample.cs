@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,6 +61,11 @@ public class ObjectDetectionSample: MonoBehaviour
     private TextMeshProUGUI _countText;
 
     private Queue<int> _lastTenCounts = new Queue<int>(10);
+
+    // New attributes for capture button
+
+    [SerializeField]
+    private Button _captureButton;
 
     // The name of the actively selected semantic category
     private string _categoryName = string.Empty;
@@ -167,5 +173,59 @@ public class ObjectDetectionSample: MonoBehaviour
             _categoryDropdown.onValueChanged.RemoveListener(categoryDropdown_OnValueChanged);
         }
         _filterToggle.onValueChanged.RemoveListener(ToggleFilter);
+    }
+
+    public void CaptureObjects() 
+    {
+        StartCoroutine(CaptureObjectsCoroutine());
+    }
+
+    private IEnumerator CaptureObjectsCoroutine()
+    {
+        yield return new WaitForEndOfFrame();
+
+        Niantic.Lightship.AR.XRSubsystems.XRDetectedObject[] detectedObjects;
+        if (!_objectDetectionManager.TryGetDetectedObjects(out detectedObjects) || detectedObjects.Length == 0)
+        {
+            Debug.Log("No objects detected.");
+            yield break;
+        }
+
+        foreach (var obj in detectedObjects)
+        {
+            float confidence = obj.GetConfidence(_categoryName);
+            if (confidence > _probabilityThreshold)
+            {
+                Rect _rect = obj.CalculateRect(Screen.width, Screen.height, Screen.orientation);
+                yield return StartCoroutine(CaptureBoundingBox(_rect));
+            }
+        }
+    }
+
+    private IEnumerator CaptureBoundingBox(Rect boundingBox) {
+        // Calculate the pixel coordinates of the bounding box
+        int x = Mathf.FloorToInt(boundingBox.x);
+        int y = Mathf.FloorToInt(boundingBox.y);
+        int width = Mathf.FloorToInt(boundingBox.width);
+        int height = Mathf.FloorToInt(boundingBox.height);
+
+        Texture2D screenImage = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        screenImage.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+        screenImage.Apply();
+
+        Texture2D croppedImage = new Texture2D(width, height);
+        croppedImage.SetPixels(screenImage.GetPixels(x, y, width, height));
+        croppedImage.Apply();
+
+        // Encode the cropped image to PNG
+        byte[] bytes = croppedImage.EncodeToPNG();
+
+        // Save to gallery using NativeGallery plugin
+        string fileName = $"CapturedObject_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+        NativeGallery.SaveImageToGallery(bytes, "ObjectCaptures", fileName, (success, path) =>
+        {
+            Debug.Log($"Saved captured object to: {path}");
+        });
+        yield return null;
     }
 }
