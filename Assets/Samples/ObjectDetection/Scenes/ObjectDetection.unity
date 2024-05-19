@@ -3417,14 +3417,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _probabilityThreshold: 0.5
-  _filterToggle: {fileID: 0}
   _objectDetectionManager: {fileID: 1309572512}
-  _probabilityThresholdSlider: {fileID: 0}
-  _probabilityThresholdText: {fileID: 0}
-  _categoryDropdown: {fileID: 0}
-  _drawRect: {fileID: 0}
-  _categoryNames: []
-  _countRectangle: {fileID: 0}
+  _countRectangle: {fileID: 690786734}
   _countText: {fileID: 287226552}
   _captureButton: {fileID: 629635184}
 --- !u!1 &1469988553
@@ -5067,7 +5061,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 801121486}
   m_HandleRect: {fileID: 801121485}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

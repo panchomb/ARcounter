@@ -16,8 +16,8 @@ public class ObjectDetectionSample: MonoBehaviour
     [SerializeField]
     private float _probabilityThreshold = 0.5f;
     
-    [SerializeField] 
-    private SliderToggle _filterToggle;
+    // [SerializeField] 
+    // private SliderToggle _filterToggle;
     
     [SerializeField]
     private ARObjectDetectionManager _objectDetectionManager;
@@ -34,21 +34,21 @@ public class ObjectDetectionSample: MonoBehaviour
         Color.black
     };
     
-    [SerializeField] [Tooltip("Slider GameObject to set probability threshold")]
-    private Slider _probabilityThresholdSlider;
+    // [SerializeField] [Tooltip("Slider GameObject to set probability threshold")]
+    // private Slider _probabilityThresholdSlider;
 
-    [SerializeField] [Tooltip("Text to display current slider value")]
-    private Text _probabilityThresholdText;
+    // [SerializeField] [Tooltip("Text to display current slider value")]
+    // private Text _probabilityThresholdText;
 
-    [SerializeField]
-    private Dropdown _categoryDropdown;
+    // [SerializeField]
+    // private Dropdown _categoryDropdown;
 
-    [SerializeField]
-    private DrawRect _drawRect;
+    // [SerializeField]
+    // private DrawRect _drawRect;
 
     private Canvas _canvas;
-    [SerializeField] [Tooltip("Categories to display in the dropdown")]
-    private List<string> _categoryNames;
+    // [SerializeField] [Tooltip("Categories to display in the dropdown")]
+    // private List<string> _categoryNames;
 
     private bool _filterOn = false;
 
@@ -74,11 +74,11 @@ public class ObjectDetectionSample: MonoBehaviour
         _canvas = FindObjectOfType<Canvas>();
 
 
-        _probabilityThresholdSlider.value = _probabilityThreshold;
-        _probabilityThresholdSlider.onValueChanged.AddListener(OnThresholdChanged);
-        OnThresholdChanged(_probabilityThresholdSlider.value);
+        // _probabilityThresholdSlider.value = _probabilityThreshold;
+        // _probabilityThresholdSlider.onValueChanged.AddListener(OnThresholdChanged);
+        // OnThresholdChanged(_probabilityThresholdSlider.value);
 
-        _categoryDropdown.onValueChanged.AddListener(categoryDropdown_OnValueChanged);
+        // _categoryDropdown.onValueChanged.AddListener(categoryDropdown_OnValueChanged);
 
     }
     
@@ -87,14 +87,14 @@ public class ObjectDetectionSample: MonoBehaviour
         _objectDetectionManager.ObjectDetectionsUpdated += ObjectDetectionsUpdated;
 
         // Display person by default.
-        _categoryName = _categoryNames[0];
-        if (_categoryDropdown is not null && _categoryDropdown.options.Count == 0)
-        {
-            _categoryDropdown.AddOptions(_categoryNames.ToList());
+        // _categoryName = _categoryNames[0];
+        // if (_categoryDropdown is not null && _categoryDropdown.options.Count == 0)
+        // {
+        //     _categoryDropdown.AddOptions(_categoryNames.ToList());
 
-            var dropdownList = _categoryDropdown.options.Select(option => option.text).ToList();
-            _categoryDropdown.value = dropdownList.IndexOf(_categoryName);
-        }
+        //     var dropdownList = _categoryDropdown.options.Select(option => option.text).ToList();
+        //     _categoryDropdown.value = dropdownList.IndexOf(_categoryName);
+        // }
 
     }
 
@@ -139,40 +139,40 @@ public class ObjectDetectionSample: MonoBehaviour
 
         _countText.text = $"Count: {modeCount}";
     }
-    private void OnThresholdChanged(float newThreshold){
-        _probabilityThreshold = newThreshold;
-        _probabilityThresholdText.text = "Confidence : " + newThreshold.ToString();
-    }
-    private void categoryDropdown_OnValueChanged(int val)
-    {
-        // Update the display category from the dropdown value.
-        _categoryName = _categoryDropdown.options[val].text;
-    }
+    // private void OnThresholdChanged(float newThreshold){
+    //     _probabilityThreshold = newThreshold;
+    //     _probabilityThresholdText.text = "Confidence : " + newThreshold.ToString();
+    // }
+    // private void categoryDropdown_OnValueChanged(int val)
+    // {
+    //     // Update the display category from the dropdown value.
+    //     _categoryName = _categoryDropdown.options[val].text;
+    // }
     public void Start()
     {
         _objectDetectionManager.enabled = true;
         _objectDetectionManager.MetadataInitialized += OnMetadataInitialized;
-        _filterToggle.onValueChanged.AddListener(ToggleFilter);
-        _filterOn = _filterToggle.isOn;
-        _categoryDropdown.interactable = _filterOn;
+        // _filterToggle.onValueChanged.AddListener(ToggleFilter);
+        // _filterOn = _filterToggle.isOn;
+        // _categoryDropdown.interactable = _filterOn;
     }
-    private void ToggleFilter(bool on){
-        _filterOn = on;
-        _categoryDropdown.interactable = on;
-    }
+    // private void ToggleFilter(bool on){
+    //     _filterOn = on;
+    //     _categoryDropdown.interactable = on;
+    // }
     private void OnDestroy()
     {
         _objectDetectionManager.MetadataInitialized -= OnMetadataInitialized;
         _objectDetectionManager.ObjectDetectionsUpdated -= ObjectDetectionsUpdated;
-        if (_probabilityThresholdSlider)
-        {
-            _probabilityThresholdSlider.onValueChanged.RemoveListener(OnThresholdChanged);
-        }
-        if (_categoryDropdown is not null)
-        {
-            _categoryDropdown.onValueChanged.RemoveListener(categoryDropdown_OnValueChanged);
-        }
-        _filterToggle.onValueChanged.RemoveListener(ToggleFilter);
+        // if (_probabilityThresholdSlider)
+        // {
+        //     _probabilityThresholdSlider.onValueChanged.RemoveListener(OnThresholdChanged);
+        // }
+        // if (_categoryDropdown is not null)
+        // {
+        //     _categoryDropdown.onValueChanged.RemoveListener(categoryDropdown_OnValueChanged);
+        // }
+        // _filterToggle.onValueChanged.RemoveListener(ToggleFilter);
     }
 
     public void CaptureObjects() 
@@ -193,10 +193,12 @@ public class ObjectDetectionSample: MonoBehaviour
 
         foreach (var obj in detectedObjects)
         {
-            float confidence = obj.GetConfidence(_categoryName);
+            float confidence = obj.GetConfidence("vehicle");
+            int h = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.height);
+            int w = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.width);
             if (confidence > _probabilityThreshold)
             {
-                Rect _rect = obj.CalculateRect(Screen.width, Screen.height, Screen.orientation);
+                Rect _rect = obj.CalculateRect(w, h, Screen.orientation);
                 yield return StartCoroutine(CaptureBoundingBox(_rect));
             }
         }
@@ -204,13 +206,16 @@ public class ObjectDetectionSample: MonoBehaviour
 
     private IEnumerator CaptureBoundingBox(Rect boundingBox) {
         // Calculate the pixel coordinates of the bounding box
+        int h = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.height);
+        int w = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.width);  
+
         int x = Mathf.FloorToInt(boundingBox.x);
         int y = Mathf.FloorToInt(boundingBox.y);
         int width = Mathf.FloorToInt(boundingBox.width);
         int height = Mathf.FloorToInt(boundingBox.height);
 
-        Texture2D screenImage = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-        screenImage.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+        Texture2D screenImage = new Texture2D(w, h, TextureFormat.RGB24, false);
+        screenImage.ReadPixels(new Rect(0, 0, w, h), 0, 0);
         screenImage.Apply();
 
         Texture2D croppedImage = new Texture2D(width, height);
