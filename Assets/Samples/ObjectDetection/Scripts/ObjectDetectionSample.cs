@@ -203,23 +203,34 @@ public class ObjectDetectionSample: MonoBehaviour
             }
         }
     }
+    private IEnumerator CaptureBoundingBox(Rect boundingBox)
+    {
+        yield return new WaitForEndOfFrame();
 
-    private IEnumerator CaptureBoundingBox(Rect boundingBox) {
-        // Calculate the pixel coordinates of the bounding box
-        int h = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.height);
-        int w = Mathf.FloorToInt(_canvas.GetComponent<RectTransform>().rect.width);  
-
+        // The boundingBox is already in screen space coordinates
         int x = Mathf.FloorToInt(boundingBox.x);
         int y = Mathf.FloorToInt(boundingBox.y);
         int width = Mathf.FloorToInt(boundingBox.width);
         int height = Mathf.FloorToInt(boundingBox.height);
 
-        Texture2D screenImage = new Texture2D(w, h, TextureFormat.RGB24, false);
-        screenImage.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+        // Ensure the bounding box stays within the screen bounds
+        x = Mathf.Clamp(x, 0, Screen.width);
+        y = Mathf.Clamp(y, 0, Screen.height);
+        width = Mathf.Clamp(width, 0, Screen.width - x);
+        height = Mathf.Clamp(height, 0, Screen.height - y);
+
+        // Log the pixel coordinates for debugging
+        Debug.Log($"Capturing bounding box at position: {x}, {y} with width: {width} and height: {height}");
+
+        // Create a texture of the entire screen
+        Texture2D screenImage = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+        screenImage.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
         screenImage.Apply();
 
+        // Create a new texture for the cropped area
         Texture2D croppedImage = new Texture2D(width, height);
-        croppedImage.SetPixels(screenImage.GetPixels(x, y, width, height));
+        Color[] pixels = screenImage.GetPixels(x, y - height, width, height);
+        croppedImage.SetPixels(pixels);
         croppedImage.Apply();
 
         // Encode the cropped image to PNG
@@ -231,6 +242,7 @@ public class ObjectDetectionSample: MonoBehaviour
         {
             Debug.Log($"Saved captured object to: {path}");
         });
+
         yield return null;
     }
 }
